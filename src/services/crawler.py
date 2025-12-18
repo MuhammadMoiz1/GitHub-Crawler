@@ -17,14 +17,12 @@ class CrawlerService:
         # Fetch repositories in batches
         all_repos: List[Repository] = []
         remaining = total_repos
-        cursor= None
         
         while remaining > 0:
             current_batch = min(batch_size, remaining)
-            repos, cursor = self.github_client.fetch_repositories(
+            repos = self.github_client.fetch_repositories(
                 batch_size=100,
-                total_repos=current_batch,
-                cursor=cursor
+                total_repos=current_batch
             )
             
             if not repos:

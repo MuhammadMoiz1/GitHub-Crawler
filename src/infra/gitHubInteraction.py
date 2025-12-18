@@ -1,6 +1,6 @@
 import requests
 import time
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 from datetime import datetime
 from ..models.repository import Repository
 
@@ -15,10 +15,10 @@ class GitHubGraphQLClient:
             "Content-Type": "application/json"
         }
         
-    def fetch_repositories(self, batch_size: int = 100, total_repos: int = 100000, cursor: Optional[str] = None ) -> Tuple[List[Repository], Optional[str]]:
+    def fetch_repositories(self, batch_size: int = 100, total_repos: int = 100000) -> List[Repository]:
         """Fetch repositories using GraphQL with pagination"""
         repositories = []
-        
+        cursor = None
         query = """
         query($cursor: String, $pageSize: Int!) {
           search(query: "stars:>1", type: REPOSITORY, first: $pageSize, after: $cursor) {
@@ -76,7 +76,7 @@ class GitHubGraphQLClient:
             
             print(f"Fetched {len(repositories)} repositories...")
         
-        return repositories[:total_repos],cursor
+        return repositories[:total_repos]
     
     def _execute_query(self, query: str, variables: Dict) -> Optional[Dict]:
         """Execute GraphQL query with retry logic"""

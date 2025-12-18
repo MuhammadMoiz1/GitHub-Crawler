@@ -15,7 +15,7 @@ def main():
     crawler = CrawlerService(github_client, database)
     
     # Execute
-    total = crawler.crawl_and_store(total_repos=100000)
+    total = crawler.crawl_and_store(total_repos=2000)
     print(f"Successfully crawled {total} repositories")
 
 if __name__ == "__main__":
