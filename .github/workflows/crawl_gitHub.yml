@@ -1,0 +1,65 @@
+name: GitHub Crawler
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  
+  workflow_dispatch: 
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: github_crawler
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Setup PostgreSQL schema
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d github_crawler -f schemas/schema.sql
+      
+      - name: Crawl GitHub stars
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/github_crawler
+        run: |
+          python src/main.py
+      
+      - name: Export database to CSV
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d github_crawler -c "\COPY (SELECT r.id, r.name, r.owner_name, m.stars_count, m.recorded_at FROM repositories r JOIN repository_metrics m ON r.id = m.repository_id ORDER BY m.recorded_at DESC) TO 'repositories_export.csv' WITH CSV HEADER"
+      
+      - name: Upload results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: crawl-results
+          path: repositories_export.csv
+          retention-days: 30
