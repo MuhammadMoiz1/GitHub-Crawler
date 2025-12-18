@@ -49,7 +49,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/github_crawler
         run: |
-          python src/main.py
+          python -m src.main
       
       - name: Export database to CSV
         env:
