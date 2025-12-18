@@ -15,13 +15,19 @@ class GitHubGraphQLClient:
             "Content-Type": "application/json"
         }
         
-    def fetch_repositories(self, batch_size: int = 100, total_repos: int = 100000) -> List[Repository]:
+    def fetch_repositories(self, batch_size: int = 100, total_repos: int = 100000,filterDate: str = "") -> List[Repository]:
         """Fetch repositories using GraphQL with pagination"""
         repositories = []
         cursor = None
+        search_query=''
+        if filterDate:
+            search_query = f"created:>={filterDate}"
+        else:
+            search_query = "stars:>1"
+
         query = """
-        query($cursor: String, $pageSize: Int!) {
-          search(query: "stars:>1", type: REPOSITORY, first: $pageSize, after: $cursor) {
+        query($cursor: String, $pageSize: Int!, $searchQuery: String!) {
+          search(query: $searchQuery, type: REPOSITORY, first: $pageSize, after: $cursor) {
             pageInfo {
               hasNextPage
               endCursor
@@ -48,7 +54,8 @@ class GitHubGraphQLClient:
         while len(repositories) < total_repos:
             variables = {
                 "cursor": cursor,
-                "pageSize": min(batch_size, total_repos - len(repositories))
+                "pageSize": min(batch_size, total_repos - len(repositories)),
+                "searchQuery":search_query
             }
             
             response = self._execute_query(query, variables)
@@ -81,7 +88,6 @@ class GitHubGraphQLClient:
     def _execute_query(self, query: str, variables: Dict) -> Optional[Dict]:
         """Execute GraphQL query with retry logic"""
         max_retries = 3
-        
         for attempt in range(max_retries):
             try:
                 response = requests.post(
