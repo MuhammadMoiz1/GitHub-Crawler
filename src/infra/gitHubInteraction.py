@@ -38,10 +38,10 @@ class GitHubGraphQLClient:
                 stargazerCount
               }
             }
-            rateLimit {
-              remaining
-              resetAt
-            }
+          }
+          rateLimit {
+            remaining
+            resetAt
           }
         }
         """
@@ -53,7 +53,6 @@ class GitHubGraphQLClient:
             }
             
             response = self._execute_query(query, variables)
-            
             if not response:
                 break
                 
@@ -73,7 +72,7 @@ class GitHubGraphQLClient:
             cursor = page_info.get("endCursor")
             
             # Handle rate limiting
-            rate_limit = search_result.get("rateLimit", {})
+            rate_limit = response.get("data", {}).get("rateLimit", {})
             self._handle_rate_limit(rate_limit)
             
             print(f"Fetched {len(repositories)} repositories...")

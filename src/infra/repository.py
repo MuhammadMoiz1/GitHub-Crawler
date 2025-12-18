@@ -19,17 +19,17 @@ class RepositoryDatabase:
                 
                 repo_data = [
                     (
-                        r.id, r.full_name, r.owner_login
+                        r.id, r.name, r.owner_name
                     )
                     for r in repositories
                 ]
                 
                 execute_batch(cursor, """
                     INSERT INTO repositories 
-                    (id, full_name, owner_name)
+                    (id, name, owner_name)
                     VALUES (%s, %s, %s)
-                    ON CONFLICT (id) DO DO UPDATE SET
-                        full_name = EXCLUDED.full_name,
+                    ON CONFLICT (id) DO UPDATE SET
+                        name = EXCLUDED.name,
                         owner_name = EXCLUDED.owner_name
                 """, repo_data)
                 
